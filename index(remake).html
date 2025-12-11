@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RULE OF ORES by Rin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Custom Palette from User */
+        :root {
+            --color-bg: #1b3c53;       /* Darkest Blue */
+            --color-card: #234c6a;     /* Medium Blue */
+            --color-accent: #456882;   /* Light Steel Blue */
+            --color-text: #e3e3e3;     /* Light Gray/White */
+        }
+
+        body { 
+            font-family: 'Kanit', sans-serif; 
+            background-color: var(--color-bg); 
+            color: var(--color-text); 
+        }
+        
+        .tab-btn {
+            color: #94a3b8; /* Slate-400 equivalent */
+            transition: all 0.3s ease;
+        }
+        .tab-btn:hover {
+            color: var(--color-text);
+        }
+        .tab-btn.active { 
+            border-bottom: 3px solid #60a5fa; /* Sky-400 */
+            color: #ffffff; 
+            font-weight: 600; 
+            background: linear-gradient(to top, rgba(35, 76, 106, 0.5), transparent);
+        }
+        
+        .rune-card { 
+            background-color: var(--color-card);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s; 
+        }
+        .rune-card:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .stat-max { color: #86efac; font-weight: bold; text-shadow: 0 0 10px rgba(134, 239, 172, 0.2); }
+        .stat-sub { color: #93c5fd; font-size: 0.85em; line-height: 1.6; } /* Light Blue for Substats */
+        .drop-source { color: #f9a8d4; font-size: 0.9em; }
+        .trait-badge { background-color: rgba(69, 104, 130, 0.5); border: 1px solid var(--color-accent); }
+        .main-badge { background-color: rgba(27, 60, 83, 0.8); border: 1px solid rgba(255,255,255,0.2); }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--color-bg); }
+        ::-webkit-scrollbar-thumb { background: var(--color-accent); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #5a7b94; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="p-4 sticky top-0 z-50 shadow-lg" style="background-color: rgba(27, 60, 83, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.1);">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold text-white tracking-wider"><i class="fas fa-gem mr-2 text-sky-400"></i>RULE OF ORES</h1>
+            <span class="text-xs text-slate-400">Updated by Rin v2.5 (Clarified Traits)</span>
+        </div>
+    </header>
+
+    <!-- Filter Tabs -->
+    <div class="shadow-md sticky top-[60px] z-40" style="background-color: var(--color-bg);">
+        <div class="max-w-4xl mx-auto flex justify-around overflow-x-auto pb-1">
+            <button onclick="filterRunes('ores')" class="tab-btn active py-3 px-4 min-w-[90px] text-center whitespace-nowrap"><i class="fas fa-cube block md:inline mb-1 md:mb-0 md:mr-1 text-sm"></i> <span class="text-sm md:text-base">แร่ (Ores)</span></button>
+            <button onclick="filterRunes('weapon')" class="tab-btn py-3 px-4 min-w-[90px] text-center whitespace-nowrap"><i class="fas fa-sword block md:inline mb-1 md:mb-0 md:mr-1 text-sm"></i> <span class="text-sm md:text-base">อาวุธ</span></button>
+            <button onclick="filterRunes('armor')" class="tab-btn py-3 px-4 min-w-[90px] text-center whitespace-nowrap"><i class="fas fa-shield-alt block md:inline mb-1 md:mb-0 md:mr-1 text-sm"></i> <span class="text-sm md:text-base">เกราะ</span></button>
+            <button onclick="filterRunes('pickaxe')" class="tab-btn py-3 px-4 min-w-[90px] text-center whitespace-nowrap"><i class="fas fa-pickaxe block md:inline mb-1 md:mb-0 md:mr-1 text-sm"></i> <span class="text-sm md:text-base">ที่ขุด</span></button>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <main class="flex-grow p-4 max-w-4xl mx-auto w-full">
+        
+        <!-- Info Banner -->
+        <div class="p-3 rounded-lg mb-6 text-sm text-blue-100 flex items-start gap-3 shadow-inner" style="background: linear-gradient(90deg, rgba(69, 104, 130, 0.4) 0%, rgba(35, 76, 106, 0.2) 100%); border-left: 4px solid #60a5fa;">
+            <i class="fas fa-info-circle mt-1 text-sky-400"></i> 
+            <div>
+                <strong>Rin's Note:</strong> อัปเดตข้อมูล!
+                <br>• พวกที่เป็น <strong>Passive Trait</strong> จะไม่มี Substats เพิ่มแล้วนะ เพราะตัวมันเองคือ Stat ที่สุ่มได้จาก Main Rune
+            </div>
+        </div>
+
+        <div id="rune-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Items will be injected here by JS -->
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center p-6 text-sm mt-8 border-t border-slate-700/50" style="background-color: rgba(27, 60, 83, 0.8);">
+        <p class="text-slate-400">สร้างโดย Rin ผู้ช่วยอัจฉริยะ (Gen Z Edition)</p>
+        <p class="text-xs mt-1 text-slate-500">Theme: Deep Ocean Blue</p>
+    </footer>
+
+    <script>
+        const allItems = [
+            // ================= ORES (Traits) =================
+            // Ores typically imply their trait is fixed upon crafting, so no random "substats" in the same way as runes
+            {
+                name: "Magmaite",
+                type: "ores",
+                icon: "fa-meteor",
+                color: "text-red-400",
+                desc: "แร่ภูเขาไฟระดับ Legendary (สายระเบิด)",
+                maxStat: "Weapons: 50% AoE Explosion (โอกาส 35%)",
+                subStats: "Fixed Trait (Material)",
+                source: "Volcanic Rock (1/3003) - Forgotten Kingdom",
+                tier: "S"
+            },
+            {
+                name: "Fireite",
+                type: "ores",
+                icon: "fa-fire-alt",
+                color: "text-orange-400",
+                desc: "แร่แห่งไฟ (สายเผา)",
+                maxStat: "Weapons: 20% Burn Damage (โอกาส 30%)",
+                subStats: "Fixed Trait (Material)",
+                source: "Volcanic Rock (1/2187) - Forgotten Kingdom",
+                tier: "S"
+            },
+            {
+                name: "Eye Ore",
+                type: "ores",
+                icon: "fa-eye",
+                color: "text-purple-400",
+                desc: "แร่ปีศาจ (แลกเลือดเป็นดาเมจ)",
+                maxStat: "All Gear: +15% DMG แต่ลด Max HP -10%",
+                subStats: "Fixed Trait (Material)",
+                source: "Basalt/Volcanic Rock (1/1333) - Rare Drop",
+                tier: "A"
+            },
+            {
+                name: "Darkryte",
+                type: "ores",
+                icon: "fa-moon",
+                color: "text-slate-400",
+                desc: "แร่แห่งความมืด (สายหลบหลีก)",
+                maxStat: "Armor: 15% Chance to Negate Damage (Dodge)",
+                subStats: "Fixed Trait (Material)",
+                source: "Volcanic Rock (1/5555) - Mythical Rarity",
+                tier: "S"
+            },
+            {
+                name: "Demonite",
+                type: "ores",
+                icon: "fa-dragon",
+                color: "text-red-500",
+                desc: "แร่ปีศาจโบราณ (สายสวนกลับ)",
+                maxStat: "Armor: 25% Chance to Burn Enemy on Hit",
+                subStats: "Fixed Trait (Material)",
+                source: "Volcanic Rock (1/3666) - Mythical Rarity",
+                tier: "S"
+            },
+            {
+                name: "Uranium",
+                type: "ores",
+                icon: "fa-radiation",
+                color: "text-green-400",
+                desc: "แร่กัมมันตภาพรังสี (สายแทงค์ AoE)",
+                maxStat: "Armor: Deals 5% Max HP as AoE DMG (Around self)",
+                subStats: "Fixed Trait (Material)",
+                source: "Basalt Vein (1/777)",
+                tier: "B"
+            },
+            {
+                name: "Rivalite",
+                type: "ores",
+                icon: "fa-bolt",
+                color: "text-yellow-400",
+                desc: "แร่สายคริติคอล",
+                maxStat: "Weapons: +20% Critical Chance",
+                subStats: "Fixed Trait (Material)",
+                source: "Basalt Vein / Volcanic Rock (1/569)",
+                tier: "B"
+            },
+            {
+                name: "Obsidian",
+                type: "ores",
+                icon: "fa-cube",
+                color: "text-gray-400",
+                desc: "แร่ป้องกันขั้นสูง",
+                maxStat: "Armor: +30% Extra Defense",
+                subStats: "Fixed Trait (Material)",
+                source: "Volcanic Rock (1/333)",
+                tier: "A"
+            },
+            {
+                name: "Mythril",
+                type: "ores",
+                icon: "fa-shield-alt",
+                color: "text-blue-300",
+                desc: "แร่ป้องกันมาตรฐาน",
+                maxStat: "Armor: +15% Extra Defense",
+                subStats: "Fixed Trait (Material)",
+                source: "Basalt Vein (1/813)",
+                tier: "B"
+            },
+            {
+                name: "Lightite",
+                type: "ores",
+                icon: "fa-feather-alt",
+                color: "text-sky-300",
+                desc: "แร่แห่งแสง (สายความเร็ว)",
+                maxStat: "Armor: +15% Movement Speed",
+                subStats: "Fixed Trait (Material)",
+                source: "Basalt Vein (1/3333)",
+                tier: "C"
+            },
+            {
+                name: "Poopite",
+                type: "ores",
+                icon: "fa-poo",
+                color: "text-yellow-600",
+                desc: "แร่...เอ่อ (สายฮาแต่มีพิษ)",
+                maxStat: "Weapons: Poison Cloud when HP < 35%",
+                subStats: "Fixed Trait (Material)",
+                source: "Pebble/Rock (1/131)",
+                tier: "C"
+            },
+
+            // ================= WEAPON RUNES =================
+            // Weapon Runes Substats
+            {
+                name: "Blast Chip",
+                type: "weapon",
+                category: "Main Rune",
+                icon: "fa-bomb",
+                color: "text-red-400",
+                desc: "Rune: สร้างระเบิดวงกว้าง (AoE Explosion)",
+                maxStat: "Explosion DMG: 50% ของ Weapon DMG",
+                subStats: "• Crit Chance: สูงสุด +15%<br>• Crit DMG: สูงสุด +25%<br>• Atk Speed: สูงสุด +20%<br>• Lethality: สูงสุด +15%",
+                source: "Forgotten Kingdom Enemies",
+                tier: "S"
+            },
+            {
+                name: "Drain Edge",
+                type: "weapon",
+                category: "Main Rune",
+                icon: "fa-tint",
+                color: "text-rose-500",
+                desc: "Rune: ดูดเลือดจากการโจมตี (Life Steal)",
+                maxStat: "Heal: 12% ของ Physical DMG",
+                subStats: "• Crit Chance: สูงสุด +15%<br>• Crit DMG: สูงสุด +25%<br>• Atk Speed: สูงสุด +20%<br>• Lethality: สูงสุด +15%",
+                source: "Rare Drop from High Level Mobs",
+                tier: "S"
+            },
+            {
+                name: "Flame Spark",
+                type: "weapon",
+                category: "Main Rune",
+                icon: "fa-fire",
+                color: "text-orange-400",
+                desc: "Rune: สร้างความเสียหายไฟเผาไหม้ (Burn)",
+                maxStat: "Burn DMG: 15-20% ต่อวินาที",
+                subStats: "• Crit Chance: สูงสุด +15%<br>• Crit DMG: สูงสุด +25%<br>• Atk Speed: สูงสุด +20%<br>• Lethality: สูงสุด +15%",
+                source: "Deathaxe Skeleton, Reaper",
+                tier: "A"
+            },
+            {
+                name: "Venom Crumb",
+                type: "weapon",
+                category: "Main Rune",
+                icon: "fa-skull-crossbones",
+                color: "text-green-400",
+                desc: "Rune: พิษกัดกินเลือด (Poison)",
+                maxStat: "Poison: 9-10% DMG (5 วิ)",
+                subStats: "• Crit Chance: สูงสุด +15%<br>• Crit DMG: สูงสุด +25%<br>• Atk Speed: สูงสุด +20%<br>• Lethality: สูงสุด +15%",
+                source: "Poison Mobs",
+                tier: "A"
+            },
+             {
+                name: "Lethality (Trait)",
+                type: "weapon",
+                category: "Passive",
+                icon: "fa-fist-raised",
+                color: "text-yellow-400",
+                desc: "Trait: เพิ่มพลังโจมตีกายภาพ",
+                maxStat: "Phys DMG: +15%",
+                subStats: "Passive Trait",
+                source: "Random Roll on Weapon Runes",
+                tier: "A"
+            },
+            {
+                name: "Critical Chance (Trait)",
+                type: "weapon",
+                category: "Passive",
+                icon: "fa-crosshairs",
+                color: "text-red-300",
+                desc: "Trait: เพิ่มโอกาสคริติคอล",
+                maxStat: "Crit: +10-15%",
+                subStats: "Passive Trait",
+                source: "Random Roll on Weapon Runes",
+                tier: "S"
+            },
+
+            // ================= ARMOR RUNES =================
+            // Armor Runes Substats
+            {
+                name: "Ward Patch",
+                type: "armor",
+                category: "Main Rune",
+                icon: "fa-shield-virus",
+                color: "text-blue-300",
+                desc: "Rune: โล่ลดความเสียหาย (Shield)",
+                maxStat: "Reduce DMG: 14% (โอกาส 15%)",
+                subStats: "• Vitality (HP): สูงสุด +15%<br>• Endurance (Stamina): สูงสุด +15%<br>• Stride (Dash): สูงสุด +11%",
+                source: "General Mobs in Stonewake",
+                tier: "B"
+            },
+            {
+                name: "Rage Mark",
+                type: "armor",
+                category: "Main Rune",
+                icon: "fa-angry",
+                color: "text-red-500",
+                desc: "Rune: บ้าคลั่งเมื่อเลือดต่ำ (Berserk)",
+                maxStat: "Buff: +26% DMG/Speed (HP < 35%)",
+                subStats: "• Vitality (HP): สูงสุด +15%<br>• Endurance (Stamina): สูงสุด +15%<br>• Stride (Dash): สูงสุด +11%",
+                source: "Forgotten Kingdom Mobs",
+                tier: "B"
+            },
+            {
+                name: "Briar Notch",
+                type: "armor",
+                category: "Main Rune",
+                icon: "fa-bahai",
+                color: "text-emerald-400",
+                desc: "Rune: สะท้อนดาเมจ (Thorns)",
+                maxStat: "Reflect: 10% ของ Dmg ที่ได้รับ",
+                subStats: "• Vitality (HP): สูงสุด +15%<br>• Endurance (Stamina): สูงสุด +15%<br>• Stride (Dash): สูงสุด +11%",
+                source: "Deathaxe Skeleton",
+                tier: "B"
+            },
+            {
+                name: "Vitality (Trait)",
+                type: "armor",
+                category: "Passive",
+                icon: "fa-heart",
+                color: "text-pink-400",
+                desc: "Trait: เพิ่มเลือดสูงสุด",
+                maxStat: "Max HP: +10-15%",
+                subStats: "Passive Trait",
+                source: "Random Roll on Armor Runes",
+                tier: "S"
+            },
+            {
+                name: "Endurance (Trait)",
+                type: "armor",
+                category: "Passive",
+                icon: "fa-lungs",
+                color: "text-blue-200",
+                desc: "Trait: เพิ่ม Stamina",
+                maxStat: "Stamina: +10-15%",
+                subStats: "Passive Trait",
+                source: "Random Roll on Armor Runes",
+                tier: "B"
+            },
+
+            // ================= PICKAXE RUNES =================
+            {
+                name: "Miner Shard",
+                type: "pickaxe",
+                category: "Main Rune",
+                icon: "fa-gem",
+                color: "text-purple-300",
+                desc: "Rune: สุ่ม Trait สายขุด 4 แบบ",
+                maxStat: "สุ่มได้: Luck / Yield / Power / Speed",
+                subStats: "• Luck: สูงสุด +16% (ทฤษฎี 20%)<br>• Yield: สูงสุด +10%<br>• Power: สูงสุด +12%<br>• Speed: สูงสุด +10%",
+                source: "Delver Zombie (1/35)",
+                tier: "S"
+            },
+            {
+                name: "Luck I (Trait)",
+                type: "pickaxe",
+                category: "Passive",
+                icon: "fa-clover",
+                color: "text-green-300",
+                desc: "Trait: เพิ่มค่าโชค (Luck) หาของแรร์",
+                maxStat: "Luck: +13-16% (Max 20%)",
+                subStats: "Passive Trait",
+                source: "From Miner Shard",
+                tier: "S"
+            },
+            {
+                name: "Yield I (Trait)",
+                type: "pickaxe",
+                category: "Passive",
+                icon: "fa-cubes",
+                color: "text-yellow-300",
+                desc: "Trait: เพิ่มโอกาสได้แร่เบิ้ล (+1 Ore)",
+                maxStat: "Chance: 8-10%",
+                subStats: "Passive Trait",
+                source: "From Miner Shard",
+                tier: "A"
+            },
+            {
+                name: "Mine Power I (Trait)",
+                type: "pickaxe",
+                category: "Passive",
+                icon: "fa-bolt",
+                color: "text-orange-300",
+                desc: "Trait: เพิ่มพลังเจาะหิน",
+                maxStat: "Power: +9-12%",
+                subStats: "Passive Trait",
+                source: "From Miner Shard",
+                tier: "A"
+            }
+        ];
+
+        function filterRunes(category) {
+            const grid = document.getElementById('rune-grid');
+            grid.innerHTML = '';
+            
+            // Fix: Find active button by checking its onclick attribute
+            const buttons = document.querySelectorAll('.tab-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.getAttribute('onclick').includes(`'${category}'`)) {
+                    btn.classList.add('active');
+                }
+            });
+
+            const filtered = allItems.filter(item => item.type === category);
+
+            if (filtered.length === 0) {
+                 grid.innerHTML = `<div class="col-span-1 md:col-span-2 text-center py-10 text-slate-500">
+                    <i class="fas fa-ghost text-4xl mb-2 opacity-50"></i><br>ยังไม่มีข้อมูลในหมวดนี้
+                 </div>`;
+                 return;
+            }
+
+            filtered.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'rounded-xl p-4 rune-card flex flex-col justify-between relative overflow-hidden';
+                
+                let tierBadge = '';
+                if(item.tier === 'S') tierBadge = '<span class="bg-yellow-500/10 text-yellow-200 text-xs px-2 py-1 rounded border border-yellow-500/30 shadow-[0_0_10px_rgba(234,179,8,0.2)]">S-Tier</span>';
+                else if(item.tier === 'A') tierBadge = '<span class="bg-purple-500/10 text-purple-300 text-xs px-2 py-1 rounded border border-purple-500/30">A-Tier</span>';
+                else if(item.tier === 'B') tierBadge = '<span class="bg-blue-500/10 text-blue-300 text-xs px-2 py-1 rounded border border-blue-500/30">B-Tier</span>';
+                else tierBadge = '<span class="bg-slate-500/10 text-slate-300 text-xs px-2 py-1 rounded border border-slate-500/30">C-Tier</span>';
+                
+                let subBadge = '';
+                if(item.category) {
+                    const badgeClass = item.category === 'Main Rune' ? 'main-badge text-slate-300' : 'trait-badge text-sky-200';
+                    subBadge = `<span class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded ${badgeClass}">${item.category}</span>`;
+                }
+
+                // Logic to display substats
+                let subStatsHTML = '';
+                
+                if (item.subStats === "Passive Trait" || item.subStats === "Fixed Trait (Material)") {
+                    // Show specific message for passive/fixed traits
+                     subStatsHTML = `
+                        <div class="mt-2 pt-2 border-t border-white/5 opacity-50">
+                            <p class="text-xs text-slate-400 text-center uppercase tracking-wide">
+                                ❌ This IS a Substat / No Extra Slots
+                            </p>
+                        </div>
+                    `;
+                } else if(item.subStats) {
+                    // Show actual substats for Main Runes
+                    subStatsHTML = `
+                        <div class="mt-2 pt-2 border-t border-white/5">
+                            <p class="text-xs text-sky-300 uppercase tracking-wide mb-1">Max Substats</p>
+                            <p class="stat-sub font-light">${item.subStats}</p>
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-slate-900/50 border border-white/5 flex items-center justify-center ${item.color} shadow-inner">
+                                    <i class="fas ${item.icon} text-lg"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-lg leading-tight text-white">${item.name}</h3>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        ${subBadge}
+                                    </div>
+                                </div>
+                            </div>
+                            ${tierBadge}
+                        </div>
+                        <p class="text-slate-300 text-sm mb-3 min-h-[40px] mt-2 leading-relaxed opacity-90">${item.desc}</p>
+                        <div class="bg-black/20 rounded p-3 mb-2 border border-white/5">
+                            <p class="text-xs text-slate-400 uppercase tracking-wide mb-1">Max Stats / Effect</p>
+                            <p class="stat-max text-sm">${item.maxStat}</p>
+                        </div>
+                        ${subStatsHTML}
+                    </div>
+                    <div class="mt-2 pt-2 border-t border-white/10">
+                        <p class="text-xs text-slate-500 flex items-center gap-1">
+                            <i class="fas fa-search-location text-slate-600"></i>
+                            <span>หาได้จาก:</span>
+                        </p>
+                        <p class="drop-source font-medium mt-0.5 pl-4">${item.source}</p>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Init with Ores
+        document.addEventListener('DOMContentLoaded', () => {
+             filterRunes('ores');
+        });
+    </script>
+</body>
+</html>

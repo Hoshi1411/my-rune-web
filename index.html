@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Forge Rune Guide by Rin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #0f172a; color: #e2e8f0; }
+        .tab-btn.active { border-bottom: 2px solid #38bdf8; color: #38bdf8; font-weight: 600; }
+        .rune-card { transition: transform 0.2s; }
+        .rune-card:hover { transform: translateY(-2px); }
+        .stat-max { color: #34d399; font-weight: bold; }
+        .drop-source { color: #f472b6; font-size: 0.9em; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-slate-900 border-b border-slate-800 p-4 sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold text-sky-400"><i class="fas fa-hammer mr-2"></i>The Forge Runes</h1>
+            <span class="text-xs text-slate-500">Updated by Rin</span>
+        </div>
+    </header>
+
+    <!-- Filter Tabs -->
+    <div class="bg-slate-800 shadow-md sticky top-[60px] z-40">
+        <div class="max-w-4xl mx-auto flex justify-around">
+            <button onclick="filterRunes('all')" class="tab-btn active py-3 px-4 w-1/4 text-center">ทั้งหมด</button>
+            <button onclick="filterRunes('weapon')" class="tab-btn py-3 px-4 w-1/4 text-center"><i class="fas fa-sword"></i> อาวุธ</button>
+            <button onclick="filterRunes('armor')" class="tab-btn py-3 px-4 w-1/4 text-center"><i class="fas fa-shield-alt"></i> เกราะ</button>
+            <button onclick="filterRunes('pickaxe')" class="tab-btn py-3 px-4 w-1/4 text-center"><i class="fas fa-pickaxe"></i> ที่ขุด</button>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <main class="flex-grow p-4 max-w-4xl mx-auto w-full">
+        
+        <!-- Info Banner -->
+        <div class="bg-blue-900/30 border border-blue-500/30 p-3 rounded-lg mb-6 text-sm text-blue-200">
+            <i class="fas fa-info-circle mr-1"></i> <strong>Note:</strong> ค่า Max Stat อาจมีการเปลี่ยนแปลงตามแพทช์และการสุ่ม (RNG) ข้อมูลนี้อิงจากค่าสูงสุดที่พบในปัจจุบัน
+        </div>
+
+        <div id="rune-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Runes will be injected here by JS -->
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-500 text-center p-6 text-sm mt-8 border-t border-slate-800">
+        <p>สร้างโดย Rin ผู้ช่วยอัจฉริยะ (Gen Z Edition)</p>
+        <p class="text-xs mt-1">ข้อมูลสำหรับบิ๊กโดยเฉพาะ ห้ามแจก!</p>
+    </footer>
+
+    <script>
+        const runes = [
+            // --- WEAPON RUNES ---
+            {
+                name: "Flame Spark",
+                type: "weapon",
+                icon: "fa-fire",
+                color: "text-orange-500",
+                desc: "สร้างความเสียหายไฟเผาไหม้ใส่ศัตรู (Burn)",
+                maxStat: "Burn DMG: 10% ของ Weapon DMG / โอกาสติด 25%",
+                source: "Deathaxe Skeleton (1/35), Reaper (1/5), Blazing Slime (1/12)",
+                tier: "A"
+            },
+            {
+                name: "Blast Chip",
+                type: "weapon",
+                icon: "fa-bomb",
+                color: "text-red-500",
+                desc: "สร้างระเบิดวงกว้าง (AoE Explosion)",
+                maxStat: "Explosion DMG: 50% ของ Weapon DMG (AoE)",
+                source: "Forgotten Kingdom Enemies / Bosses",
+                tier: "S"
+            },
+            {
+                name: "Venom Crumb",
+                type: "weapon",
+                icon: "fa-skull-crossbones",
+                color: "text-green-500",
+                desc: "ทำให้ศัตรูติดพิษ (Poison)",
+                maxStat: "Poison DMG: ต่อเนื่อง 5 วินาที",
+                source: "Enemies in Poison/Swamp areas",
+                tier: "A"
+            },
+            {
+                name: "Drain Edge",
+                type: "weapon",
+                icon: "fa-tint",
+                color: "text-rose-600",
+                desc: "ดูดเลือดจากการโจมตี (Life Steal)",
+                maxStat: "Heal: 12% ของ Physical DMG ที่ทำได้",
+                source: "Rare Drop from High Level Mobs",
+                tier: "S"
+            },
+            {
+                name: "Frost Speck",
+                type: "weapon",
+                icon: "fa-snowflake",
+                color: "text-cyan-400",
+                desc: "แช่แข็งศัตรู (Freeze) & Slow",
+                maxStat: "Freeze Duration: สั้นๆ (เน้น CC)",
+                source: "Ice/Frost Enemies",
+                tier: "B"
+            },
+            {
+                name: "Lethality I",
+                type: "weapon",
+                icon: "fa-fist-raised",
+                color: "text-yellow-500",
+                desc: "เพิ่มดาเมจกายภาพ",
+                maxStat: "Physical DMG: +15%",
+                source: "Random Roll on Weapon Runes",
+                tier: "B"
+            },
+
+            // --- ARMOR RUNES ---
+            {
+                name: "Ward Patch",
+                type: "armor",
+                icon: "fa-shield-virus",
+                color: "text-blue-400",
+                desc: "โล่ลดความเสียหาย (Shield)",
+                maxStat: "Reduce DMG: 14% (โอกาสติด 15%)",
+                source: "General Mobs in Stonewake",
+                tier: "B"
+            },
+            {
+                name: "Briar Notch",
+                type: "armor",
+                icon: "fa-bahai",
+                color: "text-emerald-600",
+                desc: "สะท้อนดาเมจ (Thorns)",
+                maxStat: "Reflect: 10% ของ Dmg ที่ได้รับ",
+                source: "Deathaxe Skeleton (1/50)",
+                tier: "B"
+            },
+            {
+                name: "Rage Mark",
+                type: "armor",
+                icon: "fa-angry",
+                color: "text-red-600",
+                desc: "สถานะบ้าคลั่งเมื่อเลือดต่ำ (Berserk)",
+                maxStat: "Buff: +26% Dmg/MoveSpeed (เมื่อ HP < 35%)",
+                source: "Forgotten Kingdom Mobs",
+                tier: "B"
+            },
+            {
+                name: "Rot Stitch",
+                type: "armor",
+                icon: "fa-biohazard",
+                color: "text-lime-500",
+                desc: "ปล่อยพิษรอบตัวเมื่อเลือดต่ำ (Toxic Veins)",
+                maxStat: "Poison Cloud: 9% Dmg (เมื่อ HP < 35%)",
+                source: "Zombies / Poison Mobs",
+                tier: "C"
+            },
+            {
+                name: "Vitality",
+                type: "armor",
+                icon: "fa-heart",
+                color: "text-pink-500",
+                desc: "เพิ่มเลือดสูงสุด",
+                maxStat: "Max HP: +10-15% (Random Roll)",
+                source: "Secondary Passive",
+                tier: "A"
+            },
+
+            // --- PICKAXE RUNES ---
+            {
+                name: "Miner Shard",
+                type: "pickaxe",
+                icon: "fa-gem",
+                color: "text-purple-400",
+                desc: "รูนสารพัดประโยชน์สายขุด",
+                maxStat: "สุ่มออก 4 แบบ: Luck / Yield / Speed / Power",
+                source: "Delver Zombie (1/35), Bomber (1/15)",
+                tier: "S"
+            },
+            {
+                name: "Luck I (Trait)",
+                type: "pickaxe",
+                icon: "fa-clover",
+                color: "text-green-400",
+                desc: "เพิ่มค่าโชค (Luck)",
+                maxStat: "Luck: เพิ่มโอกาสดรอปแร่หายาก",
+                source: "จาก Miner Shard",
+                tier: "S"
+            },
+            {
+                name: "Yield I (Trait)",
+                type: "pickaxe",
+                icon: "fa-cubes",
+                color: "text-yellow-400",
+                desc: "เพิ่มจำนวนแร่ที่ได้ (Yield)",
+                maxStat: "Yield: มีโอกาสได้แร่เพิ่ม +1 ก้อน",
+                source: "จาก Miner Shard",
+                tier: "A"
+            },
+             {
+                name: "Mine Power I (Trait)",
+                type: "pickaxe",
+                icon: "fa-bolt",
+                color: "text-orange-400",
+                desc: "เพิ่มพลังการขุด (Mine Power)",
+                maxStat: "Power: +9% (หรือมากกว่าตาม Tier)",
+                source: "จาก Miner Shard",
+                tier: "A"
+            }
+        ];
+
+        function filterRunes(category) {
+            const grid = document.getElementById('rune-grid');
+            grid.innerHTML = '';
+            
+            const buttons = document.querySelectorAll('.tab-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.closest('button').classList.add('active'); // Fix for icon click
+
+            const filtered = category === 'all' ? runes : runes.filter(r => r.type === category);
+
+            filtered.forEach(rune => {
+                const card = document.createElement('div');
+                card.className = 'bg-slate-800 rounded-xl p-4 border border-slate-700 rune-card shadow-lg flex flex-col justify-between';
+                
+                let tierBadge = '';
+                if(rune.tier === 'S') tierBadge = '<span class="bg-yellow-500/20 text-yellow-300 text-xs px-2 py-1 rounded border border-yellow-500/50">S-Tier</span>';
+                else if(rune.tier === 'A') tierBadge = '<span class="bg-purple-500/20 text-purple-300 text-xs px-2 py-1 rounded border border-purple-500/50">A-Tier</span>';
+                
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center ${rune.color}">
+                                    <i class="fas ${rune.icon} text-lg"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-lg leading-tight">${rune.name}</h3>
+                                    <p class="text-slate-400 text-xs capitalize">${rune.type}</p>
+                                </div>
+                            </div>
+                            ${tierBadge}
+                        </div>
+                        <p class="text-slate-300 text-sm mb-3 min-h-[40px]">${rune.desc}</p>
+                        <div class="bg-slate-900/50 rounded p-2 mb-2">
+                            <p class="text-xs text-slate-400">Max Stats / Effect:</p>
+                            <p class="stat-max text-sm">${rune.maxStat}</p>
+                        </div>
+                    </div>
+                    <div class="mt-2 pt-2 border-t border-slate-700/50">
+                        <p class="text-xs text-slate-500"><i class="fas fa-search-location mr-1"></i>หาได้จาก:</p>
+                        <p class="drop-source font-medium">${rune.source}</p>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Initialize with 'all' but need to manually simulate button click or just load
+        document.addEventListener('DOMContentLoaded', () => {
+             // Mock event object for initial load
+             const mockEvent = { target: document.querySelector('.tab-btn.active') };
+             
+             // Initial render logic embedded here to avoid event issues
+             const grid = document.getElementById('rune-grid');
+             runes.forEach(rune => {
+                const card = document.createElement('div');
+                card.className = 'bg-slate-800 rounded-xl p-4 border border-slate-700 rune-card shadow-lg flex flex-col justify-between';
+                
+                let tierBadge = '';
+                if(rune.tier === 'S') tierBadge = '<span class="bg-yellow-500/20 text-yellow-300 text-xs px-2 py-1 rounded border border-yellow-500/50">S-Tier</span>';
+                else if(rune.tier === 'A') tierBadge = '<span class="bg-purple-500/20 text-purple-300 text-xs px-2 py-1 rounded border border-purple-500/50">A-Tier</span>';
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center ${rune.color}">
+                                    <i class="fas ${rune.icon} text-lg"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-lg leading-tight">${rune.name}</h3>
+                                    <p class="text-slate-400 text-xs capitalize">${rune.type}</p>
+                                </div>
+                            </div>
+                            ${tierBadge}
+                        </div>
+                        <p class="text-slate-300 text-sm mb-3 min-h-[40px]">${rune.desc}</p>
+                        <div class="bg-slate-900/50 rounded p-2 mb-2">
+                            <p class="text-xs text-slate-400">Max Stats / Effect:</p>
+                            <p class="stat-max text-sm">${rune.maxStat}</p>
+                        </div>
+                    </div>
+                    <div class="mt-2 pt-2 border-t border-slate-700/50">
+                        <p class="text-xs text-slate-500"><i class="fas fa-search-location mr-1"></i>หาได้จาก:</p>
+                        <p class="drop-source font-medium">${rune.source}</p>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        });
+    </script>
+</body>
+</html>
